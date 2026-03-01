@@ -14,7 +14,8 @@ A single-file web app for tracking TxDOT engineering projects across three distr
 
 ## Tech stack
 - Vanilla HTML, CSS, JavaScript — no frameworks, no build step
-- Data stored in browser `localStorage` under key `txdot-projects`
+- Data stored in **Firebase Firestore** (cloud database) — shared in real time across all users
+- Firebase project: `milestone-tracker-955f4`
 - Just open `milestone-tracker.html` in a browser to run it
 
 ## Data model
@@ -43,15 +44,15 @@ git push
 ```
 Or just ask Claude Code to do it.
 
-## Data storage warnings
-- Data is stored in browser localStorage — clearing your browser cache will delete all project data
-- Data is browser-specific — switching browsers (e.g. Chrome to Safari) means your data won't be there
-- Use the Export button regularly to keep a backup of your data
+## Firebase / Data
+- Data lives in Firebase Firestore — all users see the same projects in real time
+- No export/import needed to sync between computers or team members
+- Export button still available as a backup in case of accidental data loss
+- Firestore security rules set: only `projects` collection is accessible, writes are validated
 
-## Working across multiple Macs
-- The code (milestone-tracker.html) syncs via GitHub — pull on each Mac to get latest
-- The data (entered projects) does NOT sync automatically — use Export/Import buttons
-- Workflow: finish work on Mac A → Export data → copy JSON to Mac B → Import on Mac B
+## Working across computers
+- The code syncs via GitHub — run `git pull` to get the latest version on any machine
+- Data syncs automatically via Firebase — no manual steps needed
 
 ## Planned improvements
 - [x] Export all projects to a JSON file
