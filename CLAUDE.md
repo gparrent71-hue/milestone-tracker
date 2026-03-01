@@ -4,7 +4,7 @@
 A single-file web app for tracking TxDOT engineering projects across three districts: Houston, Beaumont, and Bryan.
 
 ## File location
-`/Users/rp-mac/Documents/Projects/milestone-tracker/index.html`
+`/Users/rp-mac/Documents/Projects/milestone-tracker/milestone-tracker.html`
 
 ## GitHub
 - Repo: https://github.com/gparrent71-hue/milestone-tracker (private)
@@ -14,7 +14,7 @@ A single-file web app for tracking TxDOT engineering projects across three distr
 ## Tech stack
 - Vanilla HTML, CSS, JavaScript — no frameworks, no build step
 - Data stored in browser `localStorage` under key `txdot-projects`
-- Just open `index.html` in a browser to run it
+- Just open `milestone-tracker.html` in a browser to run it
 
 ## Data model
 Each project has:
@@ -34,16 +34,16 @@ Fixed milestones (in order):
 10. Conduct Public Meeting
 
 ## Pushing changes to GitHub
-After any change to index.html, run:
+After any change to milestone-tracker.html, run:
 ```
-git add index.html
+git add milestone-tracker.html
 git commit -m "description of change"
 git push
 ```
 Or just ask Claude Code to do it.
 
 ## Working across multiple Macs
-- The code (index.html) syncs via GitHub — pull on each Mac to get latest
+- The code (milestone-tracker.html) syncs via GitHub — pull on each Mac to get latest
 - The data (entered projects) does NOT sync automatically — use Export/Import buttons
 - Workflow: finish work on Mac A → Export data → copy JSON to Mac B → Import on Mac B
 
