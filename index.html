@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HOU SE Projects – Milestone Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      background: #f0f2f5;
+      color: #222;
+    }
+
+    header {
+      background: #003087;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 20px; letter-spacing: 0.5px; }
+    header span { font-size: 12px; opacity: 0.8; }
+
+    .toolbar {
+      background: white;
+      padding: 10px 24px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      background: #003087;
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .toolbar button:hover { background: #004bcc; }
+
+    .toolbar button.secondary {
+      background: white;
+      color: #003087;
+      border: 1px solid #003087;
+    }
+
+    .toolbar button.secondary:hover { background: #e8eef8; }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .main { padding: 20px 24px; }
+
+    .district-group { margin-bottom: 32px; }
+
+    .district-header {
+      background: #003087;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px 6px 0 0;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .district-contact {
+      font-size: 12px;
+      font-weight: normal;
+      opacity: 0.85;
+    }
+
+    .project-block {
+      background: white;
+      border: 1px solid #ddd;
+      border-top: none;
+      margin-bottom: 2px;
+    }
+
+    .project-header {
+      background: #e8eef8;
+      padding: 8px 14px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .project-header:hover { background: #d4e0f5; }
+
+    .project-meta { font-size: 12px; color: #555; font-weight: normal; }
+
+    .project-actions { display: flex; gap: 8px; }
+
+    .btn-small {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-edit { background: #003087; color: white; }
+    .btn-edit:hover { background: #004bcc; }
+    .btn-delete { background: #c0392b; color: white; }
+    .btn-delete:hover { background: #e74c3c; }
+
+    .milestone-table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th {
+      background: #f7f9fc;
+      border: 1px solid #ddd;
+      padding: 7px 10px;
+      text-align: left;
+      white-space: nowrap;
+      color: #444;
+    }
+
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 6px 10px;
+      vertical-align: middle;
+    }
+
+    tr:hover td { background: #fafcff; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .status-not-started { background: #eee; color: #555; }
+    .status-in-progress { background: #fff3cd; color: #856404; }
+    .status-complete { background: #d4edda; color: #155724; }
+
+    .date-cell { white-space: nowrap; }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .green { background: #28a745; }
+    .yellow { background: #ffc107; }
+    .red { background: #dc3545; }
+    .grey { background: #aaa; }
+
+    .notes-cell {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #555;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 40px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 8px;
+      width: 620px;
+      max-width: 95vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .modal h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #003087;
+      border-bottom: 2px solid #003087;
+      padding-bottom: 8px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 7px 9px;
+      font-size: 13px;
+      font-family: Arial, sans-serif;
+    }
+
+    .form-group textarea { resize: vertical; min-height: 50px; }
+
+    .milestone-section h3 {
+      font-size: 13px;
+      color: #003087;
+      margin: 16px 0 8px;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 4px;
+    }
+
+    .milestone-row {
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr 120px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .milestone-row span { font-weight: bold; color: #333; }
+
+    .milestone-row input,
+    .milestone-row select {
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      padding: 5px 7px;
+      font-size: 12px;
+      width: 100%;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 16px;
+    }
+
+    .modal-actions button {
+      padding: 8px 20px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-save { background: #003087; color: white; }
+    .btn-save:hover { background: #004bcc; }
+    .btn-cancel { background: #eee; color: #333; }
+    .btn-cancel:hover { background: #ddd; }
+
+    .empty-state {
+      text-align: center;
+      color: #aaa;
+      padding: 24px;
+      font-style: italic;
+    }
+
+    .collapsed { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>HOU SE Projects – Milestone Tracker</h1>
+  <span id="today-label"></span>
+</header>
+
+<div class="toolbar">
+  <button onclick="openAddProject()">+ Add Project</button>
+  <button class="secondary" onclick="expandAll()">Expand All</button>
+  <button class="secondary" onclick="collapseAll()">Collapse All</button>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot green"></div> &gt;30 days</div>
+    <div class="legend-item"><div class="legend-dot yellow"></div> ≤30 days</div>
+    <div class="legend-item"><div class="legend-dot red"></div> ≤7 days / overdue</div>
+    <div class="legend-item"><div class="legend-dot grey"></div> No date / complete</div>
+  </div>
+</div>
+
+<div class="main" id="main"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2 id="modal-title">Add Project</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" id="f-name" placeholder="e.g. SH 6 Widening" />
+      </div>
+      <div class="form-group">
+        <label>CSJ Number</label>
+        <input type="text" id="f-csj" placeholder="e.g. 0912-31-105" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>District</label>
+        <select id="f-district">
+          <option value="Houston">Houston</option>
+          <option value="Beaumont">Beaumont</option>
+          <option value="Bryan">Bryan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>District Contact</label>
+        <input type="text" id="f-contact" placeholder="Name, phone or email" />
+      </div>
+    </div>
+
+    <div class="milestone-section">
+      <h3>Milestones</h3>
+      <div style="display:grid;grid-template-columns:180px 1fr 1fr 120px;gap:8px;font-size:11px;font-weight:bold;color:#666;margin-bottom:4px;">
+        <span>Milestone</span><span>Planned Date</span><span>Actual Date</span><span>Status</span>
+      </div>
+      <div id="milestone-rows"></div>
+    </div>
+
+    <div class="form-row" style="margin-top:12px;">
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="General project notes..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MILESTONES = [
+  "Traffic Methodology",
+  "Traffic Forecasts",
+  "Draft Schematic",
+  "Traffic Operations Analysis",
+  "Final Schematic",
+  "Prepare Public Meeting Material",
+  "Submit Public Meeting Material",
+  "Revise per TxDOT Comments",
+  "Advertise Public Meeting",
+  "Conduct Public Meeting"
+];
+
+const DISTRICTS = ["Houston", "Beaumont", "Bryan"];
+
+let projects = JSON.parse(localStorage.getItem("txdot-projects") || "[]");
+let editingId = null;
+
+function save() {
+  localStorage.setItem("txdot-projects", JSON.stringify(projects));
+}
+
+function today() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const d = new Date(str + "T00:00:00");
+  return isNaN(d) ? null : d;
+}
+
+function formatDate(str) {
+  const d = parseDate(str);
+  if (!d) return "—";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function dotColor(milestone) {
+  if (milestone.status === "Complete") return "grey";
+  const planned = parseDate(milestone.planned);
+  if (!planned) return "grey";
+  const diff = Math.floor((planned - today()) / 86400000);
+  if (diff < 0 || diff <= 7) return "red";
+  if (diff <= 30) return "yellow";
+  return "green";
+}
+
+function statusClass(status) {
+  if (status === "Complete") return "status-complete";
+  if (status === "In Progress") return "status-in-progress";
+  return "status-not-started";
+}
+
+function render() {
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+
+  const grouped = {};
+  DISTRICTS.forEach(d => grouped[d] = []);
+  projects.forEach(p => {
+    if (!grouped[p.district]) grouped[p.district] = [];
+    grouped[p.district].push(p);
+  });
+
+  DISTRICTS.forEach(district => {
+    const list = grouped[district];
+    if (list.length === 0) return;
+
+    const contact = list[0].contact || "";
+    const group = document.createElement("div");
+    group.className = "district-group";
+
+    const dHeader = document.createElement("div");
+    dHeader.className = "district-header";
+    dHeader.innerHTML = `
+      <span>${district} District</span>
+      <span class="district-contact">${contact ? "Contact: " + escHtml(contact) : ""}</span>
+    `;
+    group.appendChild(dHeader);
+
+    list.forEach(project => {
+      const block = document.createElement("div");
+      block.className = "project-block";
+
+      const ph = document.createElement("div");
+      ph.className = "project-header";
+      ph.innerHTML = `
+        <div>
+          <span>${escHtml(project.name)}</span>
+          <span class="project-meta"> &nbsp;|&nbsp; CSJ: ${escHtml(project.csj || "—")}</span>
+        </div>
+        <div class="project-actions">
+          <button class="btn-small btn-edit" onclick="event.stopPropagation();openEdit('${project.id}')">Edit</button>
+          <button class="btn-small btn-delete" onclick="event.stopPropagation();deleteProject('${project.id}')">Delete</button>
+        </div>
+      `;
+      ph.addEventListener("click", () => {
+        body.classList.toggle("collapsed");
+      });
+      block.appendChild(ph);
+
+      const body = document.createElement("div");
+      body.className = "milestone-table-wrap";
+
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Milestone</th>
+            <th>Planned Date</th>
+            <th>Actual Date</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+      `;
+
+      const tbody = document.createElement("tbody");
+      project.milestones.forEach(m => {
+        const color = dotColor(m);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><span class="dot ${color}"></span>${escHtml(m.name)}</td>
+          <td class="date-cell">${formatDate(m.planned)}</td>
+          <td class="date-cell">${formatDate(m.actual)}</td>
+          <td><span class="status-badge ${statusClass(m.status)}">${escHtml(m.status)}</span></td>
+          <td class="notes-cell" title="${escHtml(m.notes || "")}">${escHtml(m.notes || "")}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      body.appendChild(table);
+
+      if (project.notes) {
+        const noteDiv = document.createElement("div");
+        noteDiv.style.cssText = "padding:6px 14px;font-size:12px;color:#555;border-top:1px solid #eee;background:#fafafa;";
+        noteDiv.textContent = "Notes: " + project.notes;
+        body.appendChild(noteDiv);
+      }
+
+      block.appendChild(body);
+      group.appendChild(block);
+    });
+
+    main.appendChild(group);
+  });
+
+  if (projects.length === 0) {
+    main.innerHTML = '<div class="empty-state">No projects yet. Click "+ Add Project" to get started.</div>';
+  }
+}
+
+function openAddProject() {
+  editingId = null;
+  document.getElementById("modal-title").textContent = "Add Project";
+  document.getElementById("f-name").value = "";
+  document.getElementById("f-csj").value = "";
+  document.getElementById("f-district").value = "Houston";
+  document.getElementById("f-contact").value = "";
+  document.getElementById("f-notes").value = "";
+  buildMilestoneRows(null);
+  document.getElementById("modal-overlay").classList.add("active");
+}
+
+function openEdit(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById("modal-title").textContent = "Edit Project";
+  document.getElementById("f-name").value = p.name;
+  document.getElementById("f-csj").value = p.csj || "";
+  document.getElementById("f-district").value = p.district;
+  document.getElementById("f-contact").value = p.contact || "";
+  document.getElementById("f-notes").value = p.notes || "";
+  buildMilestoneRows(p.milestones);
+  document.getElementById("modal-overlay").classList.add("active");
+}
+
+function buildMilestoneRows(existing) {
+  const container = document.getElementById("milestone-rows");
+  container.innerHTML = "";
+  MILESTONES.forEach((name, i) => {
+    const m = existing ? existing[i] : null;
+    const row = document.createElement("div");
+    row.className = "milestone-row";
+    row.innerHTML = `
+      <span>${name}</span>
+      <input type="date" id="mp-${i}" value="${m ? (m.planned || "") : ""}" />
+      <input type="date" id="ma-${i}" value="${m ? (m.actual || "") : ""}" />
+      <select id="ms-${i}">
+        <option ${(!m || m.status === "Not Started") ? "selected" : ""}>Not Started</option>
+        <option ${(m && m.status === "In Progress") ? "selected" : ""}>In Progress</option>
+        <option ${(m && m.status === "Complete") ? "selected" : ""}>Complete</option>
+      </select>
+    `;
+
+    // Notes row below
+    const noteRow = document.createElement("div");
+    noteRow.style.cssText = "display:grid;grid-template-columns:180px 1fr;gap:8px;margin-bottom:10px;";
+    noteRow.innerHTML = `
+      <span style="font-size:11px;color:#888;padding-left:4px;">Notes</span>
+      <input type="text" id="mn-${i}" value="${m ? escHtml(m.notes || "") : ""}" placeholder="Optional notes..." style="border:1px solid #ccc;border-radius:3px;padding:5px 7px;font-size:12px;" />
+    `;
+    container.appendChild(row);
+    container.appendChild(noteRow);
+  });
+}
+
+function saveProject() {
+  const name = document.getElementById("f-name").value.trim();
+  if (!name) { alert("Please enter a project name."); return; }
+
+  const milestones = MILESTONES.map((mname, i) => ({
+    name: mname,
+    planned: document.getElementById(`mp-${i}`).value,
+    actual: document.getElementById(`ma-${i}`).value,
+    status: document.getElementById(`ms-${i}`).value,
+    notes: document.getElementById(`mn-${i}`).value.trim()
+  }));
+
+  const data = {
+    id: editingId || Date.now().toString(),
+    name,
+    csj: document.getElementById("f-csj").value.trim(),
+    district: document.getElementById("f-district").value,
+    contact: document.getElementById("f-contact").value.trim(),
+    notes: document.getElementById("f-notes").value.trim(),
+    milestones
+  };
+
+  if (editingId) {
+    const idx = projects.findIndex(x => x.id === editingId);
+    if (idx !== -1) projects[idx] = data;
+  } else {
+    projects.push(data);
+  }
+
+  save();
+  closeModal();
+  render();
+}
+
+function deleteProject(id) {
+  if (!confirm("Delete this project? This cannot be undone.")) return;
+  projects = projects.filter(x => x.id !== id);
+  save();
+  render();
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("active");
+  editingId = null;
+}
+
+function expandAll() {
+  document.querySelectorAll(".milestone-table-wrap").forEach(el => el.classList.remove("collapsed"));
+}
+
+function collapseAll() {
+  document.querySelectorAll(".milestone-table-wrap").forEach(el => el.classList.add("collapsed"));
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// Set today label
+document.getElementById("today-label").textContent = "Today: " + new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+
+render();
+</script>
+</body>
+</html>
