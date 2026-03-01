@@ -43,6 +43,11 @@ git push
 ```
 Or just ask Claude Code to do it.
 
+## Data storage warnings
+- Data is stored in browser localStorage — clearing your browser cache will delete all project data
+- Data is browser-specific — switching browsers (e.g. Chrome to Safari) means your data won't be there
+- Use the Export button regularly to keep a backup of your data
+
 ## Working across multiple Macs
 - The code (milestone-tracker.html) syncs via GitHub — pull on each Mac to get latest
 - The data (entered projects) does NOT sync automatically — use Export/Import buttons
