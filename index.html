@@ -338,6 +338,9 @@
   <button onclick="openAddProject()">+ Add Project</button>
   <button class="secondary" onclick="expandAll()">Expand All</button>
   <button class="secondary" onclick="collapseAll()">Collapse All</button>
+  <button class="secondary" onclick="exportData()">Export</button>
+  <button class="secondary" onclick="document.getElementById('import-input').click()">Import</button>
+  <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)" />
   <div class="legend">
     <div class="legend-item"><div class="legend-dot green"></div> &gt;30 days</div>
     <div class="legend-item"><div class="legend-dot yellow"></div> ≤30 days</div>
@@ -664,6 +667,35 @@ function expandAll() {
 
 function collapseAll() {
   document.querySelectorAll(".milestone-table-wrap").forEach(el => el.classList.add("collapsed"));
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(projects, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "milestone-tracker-export.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      if (!confirm(`This will replace all current projects with ${data.length} imported project(s). Continue?`)) return;
+      projects = data;
+      save();
+      render();
+    } catch {
+      alert("Invalid file. Please select a valid milestone-tracker export.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
 }
 
 function escHtml(str) {
