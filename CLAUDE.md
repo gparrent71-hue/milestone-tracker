@@ -4,7 +4,7 @@
 A single-file web app for tracking TxDOT engineering projects across three districts: Houston, Beaumont, and Bryan.
 
 ## File location
-`/Users/rp-mac/milestone-tracker/index.html`
+`/Users/rp-mac/Documents/Projects/milestone-tracker/index.html`
 
 ## GitHub
 - Repo: https://github.com/gparrent71-hue/milestone-tracker (private)
