@@ -325,6 +325,24 @@
     }
 
     .collapsed { display: none; }
+
+    .ms-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      background: #fafafa;
+    }
+
+    .ms-list-item:hover { background: #f0f4ff; }
+    .ms-list-name { font-size: 13px; color: #333; }
+    .ms-list-actions { display: flex; gap: 5px; }
+    .btn-move { background: #eee; color: #333; }
+    .btn-move:hover { background: #ddd; }
+    .btn-move:disabled { opacity: 0.3; cursor: default; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -343,6 +361,7 @@
   <button class="secondary" onclick="exportData()">Export</button>
   <button class="secondary" onclick="document.getElementById('import-input').click()">Import</button>
   <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)" />
+  <button class="secondary" onclick="openManageMilestones()">Manage Milestones</button>
   <div class="legend">
     <div class="legend-item"><div class="legend-dot green"></div> &gt;30 days</div>
     <div class="legend-item"><div class="legend-dot yellow"></div> ≤30 days</div>
@@ -404,6 +423,23 @@
   </div>
 </div>
 
+<!-- Manage Milestones Modal -->
+<div class="modal-overlay" id="milestones-modal">
+  <div class="modal" style="width:480px;">
+    <h2>Manage Milestones</h2>
+    <p style="font-size:12px;color:#666;margin-bottom:12px;">Add, remove, or reorder milestones. Changes apply to all projects going forward.</p>
+    <div id="milestone-list"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+      <input type="text" id="new-milestone-input" placeholder="New milestone name..." style="flex:1;border:1px solid #ccc;border-radius:4px;padding:7px 9px;font-size:13px;" onkeydown="if(event.key==='Enter')addMilestoneItem()" />
+      <button class="btn-save" style="padding:7px 14px;border-radius:4px;border:none;cursor:pointer;font-size:13px;" onclick="addMilestoneItem()">Add</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeMilestonesModal()">Cancel</button>
+      <button class="btn-save" onclick="saveMilestoneList()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDeXbtC_hUNZJnNRZWaOo9UjGe0WVVWty0",
@@ -417,7 +453,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const MILESTONES = [
+const DEFAULT_MILESTONES = [
   "Traffic Methodology",
   "Traffic Forecasts",
   "Draft Schematic",
@@ -432,12 +468,32 @@ const MILESTONES = [
 
 const DISTRICTS = ["Houston", "Beaumont", "Bryan"];
 
+let MILESTONES = [];
 let projects = [];
 let editingId = null;
+let milestonesLoaded = false;
+let projectsLoaded = false;
+let tempMilestones = [];
+
+function tryRender() {
+  if (milestonesLoaded && projectsLoaded) render();
+}
+
+db.collection("settings").doc("milestones").onSnapshot(doc => {
+  if (doc.exists) {
+    MILESTONES = doc.data().list || [];
+  } else {
+    MILESTONES = [...DEFAULT_MILESTONES];
+    db.collection("settings").doc("milestones").set({ list: MILESTONES });
+  }
+  milestonesLoaded = true;
+  tryRender();
+});
 
 db.collection("projects").onSnapshot(snapshot => {
   projects = snapshot.docs.map(doc => doc.data());
-  render();
+  projectsLoaded = true;
+  tryRender();
 });
 
 function today() {
@@ -539,7 +595,8 @@ function render() {
       `;
 
       const tbody = document.createElement("tbody");
-      project.milestones.forEach(m => {
+      MILESTONES.forEach(mname => {
+        const m = (project.milestones || []).find(x => x.name === mname) || { name: mname, planned: "", actual: "", status: "Not Started", notes: "" };
         const color = dotColor(m);
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -604,7 +661,7 @@ function buildMilestoneRows(existing) {
   const container = document.getElementById("milestone-rows");
   container.innerHTML = "";
   MILESTONES.forEach((name, i) => {
-    const m = existing ? existing[i] : null;
+    const m = existing ? existing.find(x => x.name === name) : null;
     const row = document.createElement("div");
     row.className = "milestone-row";
     row.innerHTML = `
@@ -711,6 +768,63 @@ function importData(event) {
   };
   reader.readAsText(file);
   event.target.value = "";
+}
+
+function openManageMilestones() {
+  tempMilestones = [...MILESTONES];
+  renderMilestoneList();
+  document.getElementById("milestones-modal").classList.add("active");
+}
+
+function closeMilestonesModal() {
+  document.getElementById("milestones-modal").classList.remove("active");
+}
+
+function renderMilestoneList() {
+  const container = document.getElementById("milestone-list");
+  container.innerHTML = "";
+  tempMilestones.forEach((name, i) => {
+    const item = document.createElement("div");
+    item.className = "ms-list-item";
+    item.innerHTML = `
+      <span class="ms-list-name">${escHtml(name)}</span>
+      <div class="ms-list-actions">
+        <button class="btn-small btn-move" onclick="moveMilestone(${i}, -1)" ${i === 0 ? "disabled" : ""}>▲</button>
+        <button class="btn-small btn-move" onclick="moveMilestone(${i}, 1)" ${i === tempMilestones.length - 1 ? "disabled" : ""}>▼</button>
+        <button class="btn-small btn-delete" onclick="removeMilestone(${i})">Remove</button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function moveMilestone(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= tempMilestones.length) return;
+  [tempMilestones[i], tempMilestones[j]] = [tempMilestones[j], tempMilestones[i]];
+  renderMilestoneList();
+}
+
+function removeMilestone(i) {
+  if (!confirm(`Remove "${tempMilestones[i]}"? This won't affect existing project data.`)) return;
+  tempMilestones.splice(i, 1);
+  renderMilestoneList();
+}
+
+function addMilestoneItem() {
+  const input = document.getElementById("new-milestone-input");
+  const name = input.value.trim();
+  if (!name) return;
+  if (tempMilestones.includes(name)) { alert("That milestone already exists."); return; }
+  tempMilestones.push(name);
+  input.value = "";
+  renderMilestoneList();
+}
+
+function saveMilestoneList() {
+  if (tempMilestones.length === 0) { alert("You must have at least one milestone."); return; }
+  db.collection("settings").doc("milestones").set({ list: tempMilestones });
+  closeMilestonesModal();
 }
 
 function escHtml(str) {
