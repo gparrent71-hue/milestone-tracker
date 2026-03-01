@@ -7,7 +7,8 @@ A single-file web app for tracking TxDOT engineering projects across three distr
 `/Users/rp-mac/Documents/Projects/milestone-tracker/milestone-tracker.html`
 
 ## GitHub
-- Repo: https://github.com/gparrent71-hue/milestone-tracker (private)
+- Repo: https://github.com/gparrent71-hue/milestone-tracker (public)
+- Live URL: https://gparrent71-hue.github.io/milestone-tracker/milestone-tracker.html
 - Logged in as: gparrent71-hue
 - Default branch: main
 
