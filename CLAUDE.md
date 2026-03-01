@@ -21,9 +21,11 @@ A single-file web app for tracking TxDOT engineering projects across three distr
 ## Data model
 Each project has:
 - `id`, `name`, `csj` (CSJ number), `district`, `contact`, `notes`
-- `milestones` — array of 10 fixed milestones, each with: `planned`, `actual`, `status`, `notes`
+- `milestones` — array of milestones, each with: `planned`, `actual`, `status`, `notes`
 
-Fixed milestones (in order):
+Milestones are managed in Firebase under `settings/milestones` and can be added, removed, and reordered directly in the app via the **Manage Milestones** button — no code change needed.
+
+Default milestones:
 1. Traffic Methodology
 2. Traffic Forecasts
 3. Draft Schematic
@@ -47,13 +49,16 @@ Or just ask Claude Code to do it.
 ## Firebase / Data
 - Data lives in Firebase Firestore — all users see the same projects in real time
 - No export/import needed to sync between computers or team members
-- Export button still available as a backup in case of accidental data loss
-- Firestore security rules set: only `projects` collection is accessible, writes are validated
+- Export button available as a backup in case of accidental data loss (Import button removed)
+- Firestore security rules set: `projects` and `settings` collections accessible, project writes are validated
+- Milestone list stored in Firebase under `settings/milestones` — editable in the app
 
 ## Working across computers
 - The code syncs via GitHub — run `git pull` to get the latest version on any machine
 - Data syncs automatically via Firebase — no manual steps needed
 
-## Planned improvements
-- [x] Export all projects to a JSON file
-- [x] Import projects from a JSON file
+## Toolbar buttons
+- **+ Add Project** — opens form to add a new project
+- **Expand All / Collapse All** — show or hide milestone tables
+- **Export** — downloads all projects as a JSON backup file
+- **Manage Milestones** — add, remove, reorder milestones via drag and drop
