@@ -48,5 +48,5 @@ Or just ask Claude Code to do it.
 - Workflow: finish work on Mac A → Export data → copy JSON to Mac B → Import on Mac B
 
 ## Planned improvements
-- [ ] Export all projects to a JSON file
-- [ ] Import projects from a JSON file
+- [x] Export all projects to a JSON file
+- [x] Import projects from a JSON file
