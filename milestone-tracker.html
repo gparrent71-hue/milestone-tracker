@@ -326,6 +326,8 @@
 
     .collapsed { display: none; }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -403,6 +405,18 @@
 </div>
 
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDeXbtC_hUNZJnNRZWaOo9UjGe0WVVWty0",
+  authDomain: "milestone-tracker-955f4.firebaseapp.com",
+  projectId: "milestone-tracker-955f4",
+  storageBucket: "milestone-tracker-955f4.firebasestorage.app",
+  messagingSenderId: "359863264645",
+  appId: "1:359863264645:web:489bcb87327ed73c0190ec"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 const MILESTONES = [
   "Traffic Methodology",
   "Traffic Forecasts",
@@ -418,12 +432,13 @@ const MILESTONES = [
 
 const DISTRICTS = ["Houston", "Beaumont", "Bryan"];
 
-let projects = JSON.parse(localStorage.getItem("txdot-projects") || "[]");
+let projects = [];
 let editingId = null;
 
-function save() {
-  localStorage.setItem("txdot-projects", JSON.stringify(projects));
-}
+db.collection("projects").onSnapshot(snapshot => {
+  projects = snapshot.docs.map(doc => doc.data());
+  render();
+});
 
 function today() {
   const d = new Date();
@@ -627,8 +642,9 @@ function saveProject() {
     notes: document.getElementById(`mn-${i}`).value.trim()
   }));
 
+  const id = editingId || Date.now().toString();
   const data = {
-    id: editingId || Date.now().toString(),
+    id,
     name,
     csj: document.getElementById("f-csj").value.trim(),
     district: document.getElementById("f-district").value,
@@ -637,23 +653,13 @@ function saveProject() {
     milestones
   };
 
-  if (editingId) {
-    const idx = projects.findIndex(x => x.id === editingId);
-    if (idx !== -1) projects[idx] = data;
-  } else {
-    projects.push(data);
-  }
-
-  save();
+  db.collection("projects").doc(id).set(data);
   closeModal();
-  render();
 }
 
 function deleteProject(id) {
   if (!confirm("Delete this project? This cannot be undone.")) return;
-  projects = projects.filter(x => x.id !== id);
-  save();
-  render();
+  db.collection("projects").doc(id).delete();
 }
 
 function closeModal() {
@@ -687,9 +693,18 @@ function importData(event) {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) throw new Error();
       if (!confirm(`This will replace all current projects with ${data.length} imported project(s). Continue?`)) return;
-      projects = data;
-      save();
-      render();
+      db.collection("projects").get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        return batch.commit();
+      }).then(() => {
+        const batch = db.batch();
+        data.forEach(project => {
+          const ref = db.collection("projects").doc(project.id);
+          batch.set(ref, project);
+        });
+        return batch.commit();
+      });
     } catch {
       alert("Invalid file. Please select a valid milestone-tracker export.");
     }
@@ -704,8 +719,6 @@ function escHtml(str) {
 
 // Set today label
 document.getElementById("today-label").textContent = "Today: " + new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
-
-render();
 </script>
 </body>
 </html>
