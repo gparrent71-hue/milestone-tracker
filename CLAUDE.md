@@ -5,6 +5,7 @@ A single-file web app for tracking TxDOT engineering projects across three distr
 
 ## File location
 `/Users/rp-mac/Documents/Projects/milestone-tracker/milestone-tracker.html`
+Note: Documents folder is synced to iCloud Drive automatically — visible in Finder under iCloud Drive → Documents → Projects
 
 ## GitHub
 - Repo: https://github.com/gparrent71-hue/milestone-tracker (public)
