@@ -343,6 +343,128 @@
     .ms-drag-handle { cursor: grab; color: #aaa; font-size: 18px; margin-right: 10px; user-select: none; }
     .ms-list-name { font-size: 13px; color: #333; flex: 1; }
     .ms-list-actions { display: flex; gap: 5px; }
+
+    /* ── View toggle ── */
+    .view-toggle {
+      display: flex;
+      border: 1px solid #003087;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      border: none;
+      border-radius: 0;
+      background: white;
+      color: #003087;
+      padding: 7px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .view-toggle button:hover:not(.active) { background: #e8eef8; }
+    .view-toggle button.active { background: #003087; color: white; }
+
+    /* ── Calendar nav ── */
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 14px 0 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #003087;
+    }
+
+    .cal-nav button {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 4px 14px;
+      font-size: 16px;
+      color: #003087;
+      cursor: pointer;
+    }
+
+    .cal-nav button:hover { background: #e8eef8; }
+
+    /* ── Calendar grid ── */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-left: 1px solid #ddd;
+      border-top: 1px solid #ddd;
+      background: white;
+    }
+
+    .cal-day-header {
+      background: #003087;
+      color: white;
+      text-align: center;
+      padding: 6px 4px;
+      font-size: 12px;
+      font-weight: bold;
+      border-right: 1px solid #002070;
+      border-bottom: 1px solid #002070;
+    }
+
+    .cal-cell {
+      border-right: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+      min-height: 110px;
+      padding: 4px;
+      background: white;
+      vertical-align: top;
+    }
+
+    .cal-cell.other-month { background: #f8f9fb; }
+    .cal-cell.today { background: #fffbe6; }
+
+    .cal-date {
+      font-size: 12px;
+      font-weight: bold;
+      color: #777;
+      margin-bottom: 3px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+    }
+
+    .today-num {
+      background: #003087;
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    /* ── Calendar event chips ── */
+    .cal-event {
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      margin-bottom: 2px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1.5;
+      border-left: 3px solid transparent;
+    }
+
+    .cal-event:hover { filter: brightness(0.93); }
+
+    .cal-event.planned-green  { background: #d4edda; color: #155724; border-left-color: #28a745; }
+    .cal-event.planned-yellow { background: #fff3cd; color: #856404; border-left-color: #ffc107; }
+    .cal-event.planned-red    { background: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+    .cal-event.planned-grey   { background: #e9ecef; color: #555;    border-left-color: #aaa; }
+    .cal-event.actual         { background: #e8eef8; color: #003087; border-left-color: #003087; font-style: italic; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -356,11 +478,14 @@
 
 <div class="toolbar">
   <button onclick="openAddProject()">+ Add Project</button>
-  <button class="secondary" onclick="expandAll()">Expand All</button>
-  <button class="secondary" onclick="collapseAll()">Collapse All</button>
+  <button class="secondary" id="btn-expand" onclick="expandAll()">Expand All</button>
+  <button class="secondary" id="btn-collapse" onclick="collapseAll()">Collapse All</button>
   <button class="secondary" onclick="exportData()">Export</button>
-
   <button class="secondary" onclick="openManageMilestones()">Manage Milestones</button>
+  <div class="view-toggle">
+    <button id="btn-view-list" class="active" onclick="setView('list')">List</button>
+    <button id="btn-view-cal" onclick="setView('calendar')">Calendar</button>
+  </div>
   <div class="legend">
     <div class="legend-item"><div class="legend-dot green"></div> &gt;30 days</div>
     <div class="legend-item"><div class="legend-dot yellow"></div> ≤30 days</div>
@@ -473,6 +598,8 @@ let editingId = null;
 let milestonesLoaded = false;
 let projectsLoaded = false;
 let tempMilestones = [];
+let currentView = 'list';
+let calendarDate = new Date();
 
 function tryRender() {
   if (milestonesLoaded && projectsLoaded) render();
@@ -530,6 +657,11 @@ function statusClass(status) {
 }
 
 function render() {
+  if (currentView === 'calendar') { renderCalendar(); return; }
+  renderList();
+}
+
+function renderList() {
   const main = document.getElementById("main");
   main.innerHTML = "";
 
@@ -843,6 +975,110 @@ function saveMilestoneList() {
   if (tempMilestones.length === 0) { alert("You must have at least one milestone."); return; }
   db.collection("settings").doc("milestones").set({ list: tempMilestones });
   closeMilestonesModal();
+}
+
+// ── View toggle ────────────────────────────────────────────────────────────────
+function setView(view) {
+  currentView = view;
+  document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
+  document.getElementById('btn-view-cal').classList.toggle('active', view === 'calendar');
+  document.getElementById('btn-expand').style.display  = view === 'list' ? '' : 'none';
+  document.getElementById('btn-collapse').style.display = view === 'list' ? '' : 'none';
+  render();
+}
+
+// ── Calendar ───────────────────────────────────────────────────────────────────
+function calPrev() { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); }
+function calNext() { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); }
+
+function renderCalendar() {
+  const main = document.getElementById('main');
+  const year  = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const monthLabel = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Build event map: "YYYY-MM-DD" → [{project, milestone, type}]
+  const eventMap = {};
+  for (const project of projects) {
+    for (const m of (project.milestones || [])) {
+      if (m.planned) {
+        if (!eventMap[m.planned]) eventMap[m.planned] = [];
+        eventMap[m.planned].push({ project, milestone: m, type: 'planned' });
+      }
+      if (m.actual) {
+        if (!eventMap[m.actual]) eventMap[m.actual] = [];
+        eventMap[m.actual].push({ project, milestone: m, type: 'actual' });
+      }
+    }
+  }
+
+  const todayStr   = new Date().toISOString().slice(0, 10);
+  const firstDay   = new Date(year, month, 1);
+  const lastDay    = new Date(year, month + 1, 0);
+  const startDow   = firstDay.getDay();
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  let headerHtml = dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+
+  let cellsHtml = '';
+
+  // Leading days from previous month
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(year, month, 1 - (startDow - i));
+    cellsHtml += buildCalCell(d, eventMap, false, todayStr);
+  }
+
+  // Current month
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    cellsHtml += buildCalCell(new Date(year, month, d), eventMap, true, todayStr);
+  }
+
+  // Trailing days to fill last row
+  const totalCells = startDow + lastDay.getDate();
+  const trailing   = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= trailing; i++) {
+    cellsHtml += buildCalCell(new Date(year, month + 1, i), eventMap, false, todayStr);
+  }
+
+  main.innerHTML = `
+    <div class="cal-nav">
+      <button onclick="calPrev()">&#8592;</button>
+      <span>${monthLabel}</span>
+      <button onclick="calNext()">&#8594;</button>
+    </div>
+    <div class="cal-grid">
+      ${headerHtml}
+      ${cellsHtml}
+    </div>`;
+}
+
+function buildCalCell(date, eventMap, isCurrentMonth, todayStr) {
+  const dateStr = date.toISOString().slice(0, 10);
+  const isToday = dateStr === todayStr;
+
+  let cls = 'cal-cell';
+  if (!isCurrentMonth) cls += ' other-month';
+  if (isToday)         cls += ' today';
+
+  const dayNum   = date.getDate();
+  const dateHtml = isToday
+    ? `<div class="cal-date"><div class="today-num">${dayNum}</div></div>`
+    : `<div class="cal-date">${dayNum}</div>`;
+
+  const events = eventMap[dateStr] || [];
+  let eventsHtml = '';
+  for (const ev of events) {
+    const projShort = ev.project.name.length > 14 ? ev.project.name.slice(0, 13) + '…' : ev.project.name;
+    const msShort   = ev.milestone.name.length > 16 ? ev.milestone.name.slice(0, 15) + '…' : ev.milestone.name;
+    const evCls = ev.type === 'actual'
+      ? 'cal-event actual'
+      : `cal-event planned-${dotColor(ev.milestone)}`;
+    const tipType = ev.type === 'actual' ? 'Actual' : 'Planned';
+    const tip = `${ev.project.name} — ${ev.milestone.name} (${tipType})`;
+    eventsHtml += `<div class="${evCls}" title="${escHtml(tip)}" onclick="openEdit('${ev.project.id}')">${escHtml(projShort)}: ${escHtml(msShort)}</div>`;
+  }
+
+  return `<div class="${cls}">${dateHtml}${eventsHtml}</div>`;
 }
 
 function escHtml(str) {
