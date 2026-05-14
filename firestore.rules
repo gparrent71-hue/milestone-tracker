@@ -37,8 +37,11 @@ service cloud.firestore {
 
     // Invite gate
     match /invite_codes/{code} {
-      // Public read — required for pre-auth code validation during sign-up
-      allow read: if true;
+      // Public get — required for pre-auth code validation during sign-up
+      allow get: if true;
+      // Restrict list to admin only
+      allow list: if request.auth != null
+        && request.auth.token.email == 'gparrent71@gmail.com';
       // Any authenticated user can redeem an unused code
       allow update: if request.auth != null
         && resource.data.used == false
