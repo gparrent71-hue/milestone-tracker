@@ -35,5 +35,18 @@ service cloud.firestore {
       allow read, write, delete: if true;
     }
 
+    // Invite gate
+    match /invite_codes/{code} {
+      // Public read — required for pre-auth code validation during sign-up
+      allow read: if true;
+      // Any authenticated user can redeem an unused code
+      allow update: if request.auth != null
+        && resource.data.used == false
+        && request.resource.data.used == true;
+      // Admin can create and delete codes
+      allow create, delete: if request.auth != null
+        && request.auth.token.email == 'gparrent71@gmail.com';
+    }
+
   }
 }
